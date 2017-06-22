@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Coffe</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap.css"/>
+    <link rel="stylesheet" type="text/css" href="bootstrap-theme.css"/>
+    <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+</head>
+<body>
+<div class="nav-bar">
+<div class="shop_name" ></div>
+<div id="user"></div>
+<dialog id="error" ></dialog>
+</div>
+<div class="login_form">
+    <input id="login" name="login" title="login"/>
+    <input id="password" name="password" type="password"/>
+    <a class="btn btn-info" onclick="login()">Log in</a>
+    <a class="btn btn-info" onclick="reg()">Registration</a> 
+</div>
+<div hidden id="menu">
+    <button id="open_goods" class="btn btn-info menu" onclick="renderGoods()" />
+    <button id="open_history" class="btn btn-info menu" onclick="renderHistory()" />
+    <button id="edit_users" class="btn btn-info menu admin" onclick="editUsers()"/>
+    <button id="edit_goods" class="btn btn-info menu admin" onclick="editGoods()"/>
+    <button id="all_history" class="btn btn-info menu admin" onclick="allHistory()"/>
+</div>
+<div hidden class="main">
+    <div id="goods" class="main"></div>
+    <div id="history" class="main"></div>
+    <div id="users" class="main"></div>
+    <div id="goods_e" class="main"></div>
+</div>
+<script>
+    function login(){
+        $.ajax({url:"login?login="+$('#login').val()+"&password="+$('#password').val(),success:(data)=>{
+            if(data.error){
+                $('#error').html(data.error)
+            }else{
+                $("#user").html(data.login)
+                $("#user").data({'key':data.id,'isAdmin':data.isAdmin})
+                $('#menu').show()
+                $('.menu').show()   
+                if(!data.isAdmin){
+                    $('.admin').hide()
+                }
+                renderGoods()
+            }
+        }} )
+    }
+    function reg(){
+        $.ajax({url:"reg?login="+$('#login').val()+"&password="+$('#password').val(),success:(data)=>{
+            if(data.error){
+                $('#error').html(data.error)
+            }else{
+                $("#user").html(data.login)
+                $("#user").data({'key':data.id,'isAdmin':data.isAdmin})
+                $('#menu').show()
+                $('.menu').show()   
+                if(!data.isAdmin){
+                    $('.admin').hide()
+                }
+                renderGoods()
+            }
+        }} )
+    }
+    function renderGoods(){
+        $('#history').hide()
+        $('#users').hide()
+        $('#goods_e').hide()
+        $('#goods').show()
+        $.ajax({url:"/goods",
+            success:(data)=>{
+                data.array.forEach(function(element) {
+                    $('#goods').append(
+                "<div key="+element.id+"class='element'><tabel>"+
+                 "</table></div>")                 
+                    $('#goods tabel').append(
+                 "<tr><td><img href="+element.photo+" /></td> </tr>"+
+                 "<tr><td><h3>"+element.name+" </h3></td> </tr>"+
+                 "<tr><td><p>"+element.discription+" </p></td> </tr>"+
+                 "<tr><td>"+element.count+"</td><td>"+element.price+"</td> </tr>"
+                    )
+                    if(element.count==0){                        
+                    $('#goods tabel').append("<tr><td><a class='btn btn-warning inactive'>Buy</a></td> </tr>")
+                    }else{                       
+                    $('#goods').append("<tr><td><a class='btn btn-success' onclick='addToHistory("+element.id+")'>Buy</a></td> </tr>" )}
+                }, this);
+            }
+        })
+    }
+    function renderHistory(){
+        $('#goods').hide()
+        $('#users').hide()
+        $('#goods_e').hide()
+        $('#history').show()
+        $.ajax({url:"/history/"+$('#user').attr('key'),
+            success:(data)=>{
+                $('#history').append("<tabel><tabel>")
+                data.array.forEach(function(element) {
+                    $('#history tabel').append(
+                    "<tr>"+
+                    "<td>"+element.name+"</td> "+
+                    "<td>"+element.price+"</td> "+
+                    "<td>"+element.time+"</td> "+
+                    "</tr>"
+                    )
+                }, this);
+            }
+        })
+    }
+    function editUsers(){
+        
+        $('#goods').hide()
+        $('#users').show()
+        $('#goods_e').hide()
+        $('#history').hide()
+        $.ajax({url:"/users",
+            success:(data)=>{
+                $('#history').append("<tabel id='' ><tabel>")
+                data.array.forEach(function(element) {
+                    $('#history tabel').append(
+                    "<tr>"+
+                    "<td> <input type='text' class='login' value='"+element.login+"'/></td> "+
+                    "<td> <input type='text' class='password' value='"+element.password+"'/></td> "+
+                    "<td> <input type='checkbox' class='isAdmin' value='"+element.isAdmin+"'/></td> "+
+                    "<td> <a class='btn btn-info' onclick='saveUser("+element.id+")'>Save</a></td> "+
+                    "<td> <a class='btn btn-danger' onclick='deleteUser("+element.id+")'>Delete</a></td> "+
+                    "</tr>"
+                    )
+                }, this);
+            }
+        })
+
+
+    }
+    function editGoods(){
+        $('#goods').hide()
+        $('#users').hide()
+        $('#goods_e').show()
+        $('#history').hide()
+        $.ajax({url:"/goods",
+            success:(data)=>{
+                $('#history').append("<tabel><tabel>")
+                data.array.forEach(function(element) {
+                    $('#history tabel').append(
+                    "<tr>"+
+                    "<td>  "+element.login+"</td> "+
+                    "<td>"+element.password+"</td> "+
+                    "<td>"+element.isAdmin+"</td> "+
+                    "</tr>"
+                    )
+                }, this);
+            }
+        })
+    }
+    function allHistory(){
+                $.ajax({url:"/history/",
+            success:(data)=>{
+                $('#history').append("<tabel><tabel>")
+                data.array.forEach(function(element) {
+                    $('#history tabel').append(
+                    "<tr>"+
+                    "<td>"+element.login+"</td> "+
+                    "<td>"+element.name+"</td> "+
+                    "<td>"+element.price+"</td> "+
+                    "<td>"+element.time+"</td> "+
+                    "</tr>"
+                    )
+                }, this);
+            }
+        })
+    }
+    function addToHistory(goods_id){
+        var user_id=$('#user').attr('key')
+        $.ajax({
+            url:"/history/add?user_id="+user_id+"&good_id="+good_id,
+            success:()=>{
+                renderGoods()
+            }    
+        })
+    }
+    function saveGood(id){
+
+    }
+    function deleteGood(id){
+        $.ajax({usr:"/goods/delete/"+id,
+        success:()=>{
+            editGoods()
+        } })
+    }
+    function saveUser(id){
+
+    }
+    function deleteUser(id){
+        $.ajax({usr:"/user/delete/"+id,
+        success:()=>{
+            editUsers()
+        } })
+    }
+</script>
+</body>
+</html>
